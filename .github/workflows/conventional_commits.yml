@@ -15,28 +15,10 @@ jobs:
     steps:
       - name: Checkout  
         uses: actions/checkout@v4
+
+      - name: Check Commit Messages
+        uses: webiny/action-conventional-commits@v1.3.0
             
-      - name: Get Commit Message
-        run: |
-          echo ${{ github.event.head_commit.message }}
-          
-      - name: Echo Commit Message
-        run: |
-          echo "Commit SHA: ${{ github.event.after }}, commit message: ${{ env.COMMIT_MESSAGE }}"
-
-      - name: Get PR Commits
-        id: 'get-pr-commits'
-        uses: tim-actions/get-pr-commits@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check Conventional Commit Format
-        id: 'check-conventional'
-        run: |
-          COMMIT_MSGS="${{ steps.get-pr-commits.outputs.commits }}"
-          echo "$COMMIT_MSGS"
-          echo "$COMMIT_MSGS" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\([a-zA-Z0-9_-]+\))?: .+' || { echo "Not following Conventional Commits!"; exit 1; }
-
       - name: Close PR if Not Conventional
         if: failure() 
         run: |
