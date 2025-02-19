@@ -1,4 +1,4 @@
-name: 'Check PR Commits'
+name: Check PR Commits
 
 on:
   pull_request:
@@ -20,7 +20,23 @@ jobs:
         uses:  ytanikin/pr-conventional-commits@1.4.0
         with:
           task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
-            
+
+      - name: Fetch PR commits
+        run: |
+          git fetch origin +refs/pull/${{ github.event.pull_request.number }}/merge
+          git log origin/main..FETCH_HEAD --oneline
+
+      - name: Get the latest commit message
+        id: commit_message
+        run: |
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          echo "Latest commit message: $COMMIT_MESSAGE"
+          echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_ENV
+
+      - name: Lint the latest commit message
+        run: |
+          echo "${{ env.commit_message }}" | npx commitlint
+      
       - name: Close PR if Not Conventional
         if: failure()
         run: |
