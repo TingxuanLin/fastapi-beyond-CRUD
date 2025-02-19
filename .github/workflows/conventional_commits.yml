@@ -1,49 +1,49 @@
-name: PR Conventional Commit Check
+name: 'Check PR Commits'
 
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
 
 jobs:
-  check-conventional-commits:
+  check-commit-message:
+    name: Check Commit Message
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Enforce Conventional Commits
-        uses: amannn/action-semantic-pull-request@v5
+      - name: Get PR Commits
+        id: 'get-pr-commits'
+        uses: tim-actions/get-pr-commits@master
         with:
-          types: |
-            feat
-            fix
-            docs
-            style
-            refactor
-            perf
-            test
-            chore
-            ci
-            build
-          requireScope: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Close PR if not Conventional
-        if: failure()
-        run: gh pr close ${{ github.event.pull_request.number }} --comment "Your PR does not follow Conventional Commits!"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+      - name: Check Conventional Commit Format
+        id: 'check-conventional'
+        run: |
+          COMMIT_MSGS="${{ steps.get-pr-commits.outputs.commits }}"
+          echo "$COMMIT_MSGS" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\([a-zA-Z0-9_-]+\))?: .+' || { echo "Not following Conventional Commits!"; exit 1; }
 
-      - name: Send Email Notification on PR Failure
+      - name: Close PR if Not Conventional
+        if: failure() 
+        run: |
+          gh pr close ${{ github.event.pull_request.number }} --comment "Your PR title does not follow Conventional Commits!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send Email Notification if PR Closed
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.MAIL_SERVER }}
-          server_port: ${{ secrets.MAIL_PORT }}
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "PR Rejected - Invalid Commit Message"
-          body: "Your Pull Request #${{ github.event.pull_request.number }} was rejected because it does not follow Conventional Commits."
-          to: ${{ secrets.MAIL_USERNAME }}
-          from: "GitHub Actions <${{ secrets.MAIL_FROM }}>"
+          server_address: smtp.ethereal.email
+          server_port: 587
+          username: marcelle.vonrueden72@ethereal.email
+          password: Z75RUTaWnGs2ytv7bX
+          from: "no-reply@your-repo.com"
+          to: tlin52@dons.usfca.edu
+          subject: "❌ PR Closed: Invalid Commit Messages"
+          body: |
+            Your Pull Request in the repository ${{ github.repository }} was closed due to invalid commit messages. 
+            Please follow the Conventional Commits standard.
+
