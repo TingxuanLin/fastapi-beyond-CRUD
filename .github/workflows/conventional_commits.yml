@@ -15,33 +15,13 @@ jobs:
     steps:
       - name: Checkout Repository  
         uses: actions/checkout@v4
-        
-      - name: Install commitlint globally
-        run: |
-          npm install -g @commitlint/cli @commitlint/config-conventional
           
       - name: PR Conventional Commit Validation
         uses:  ytanikin/pr-conventional-commits@1.4.0
         with:
           task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
 
-      - name: Fetch base branch and PR commits
-        run: |
-          # Fetch the base branch (e.g., main) and the PR branch (refs/pull)
-          git fetch origin ${{ github.event.pull_request.base.ref }}  # Fetch base branch (main or other base)
-          git fetch origin pull/${{ github.event.pull_request.number }}/head  # Fetch PR branch
-
-      - name: Get the latest commit message
-        id: commit_message
-        run: |
-          # Get the latest commit message from the PR branch
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B FETCH_HEAD)
-          echo "Latest commit message: $COMMIT_MESSAGE"
-          echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_ENV
-
-      - name: Lint the latest commit message
-        run: |
-          echo "${{ env.commit_message }}" | npx commitlint --config "@commitlint/config-conventional"
+      - uses: wagoid/commitlint-github-action@v6
       
       - name: Close PR if Not Conventional
         if: failure()
