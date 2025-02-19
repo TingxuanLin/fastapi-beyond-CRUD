@@ -9,31 +9,41 @@ on:
       - synchronize
 
 jobs:
-  check-commit-message:
-    name: Check Commit Message
+ check-commit-message:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Get PR Commits
-        id: 'get-pr-commits'
-        uses: tim-actions/get-pr-commits@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout Repository  
+        uses: actions/checkout@v4
 
-      - name: Check Conventional Commit Format
-        id: 'check-conventional'
+      - name: Install Node.js
+        uses: actions/setup-node@v20
+
+      - name: Install Commitlint
         run: |
-          COMMIT_MSGS="${{ steps.get-pr-commits.outputs.commits }}"
-          echo "$COMMIT_MSGS" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\([a-zA-Z0-9_-]+\))?: .+' || { echo "Not following Conventional Commits!"; exit 1; }
+          npm install --save-dev @commitlint/{cli,config-conventional}
 
+      - name: Create Commitlint Config
+        run: |
+          echo "module.exports = {extends: ['@commitlint/config-conventional']};" > commitlint.config.js
+
+      - name: Get Commit Messages
+        run: git log --format=%B -n 1 > commit-message.txt
+
+      - name: Run Commitlint
+        id: commitlint
+        run: npx commitlint --from=HEAD~1 --to=HEAD --config commitlint.config.js
+        continue-on-error: true
+        
       - name: Close PR if Not Conventional
-        if: failure() 
+        if: steps.commitlint.outcome == 'failure'
         run: |
           gh pr close ${{ github.event.pull_request.number }} --comment "Your PR title does not follow Conventional Commits!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Send Email Notification if PR Closed
-        if: failure()
+        if: steps.commitlint.outcome == 'failure'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.ethereal.email
