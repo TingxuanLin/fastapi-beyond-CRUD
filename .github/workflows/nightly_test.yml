@@ -45,14 +45,6 @@ jobs:
           done
           echo "Database is ready!"
 
-      - name: Wait for Web Service to be Ready
-        run: |
-          until curl --silent --fail http://localhost:8000; do
-            echo "Waiting for web service..."
-            sleep 5
-          done
-          echo "Web service is ready!"
-
       - name: Run Database Migrations
         run: docker exec fastapi-beyond-crud-web-1 alembic upgrade head
 
