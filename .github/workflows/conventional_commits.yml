@@ -22,14 +22,14 @@ jobs:
           task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
             
       - name: Close PR if Not Conventional
-        if: steps.commitlint.outcome == 'failure'
+        if: failure()
         run: |
           gh pr close ${{ github.event.pull_request.number }} --comment "Your PR title does not follow Conventional Commits!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Send Email Notification if PR Closed
-        if: steps.commitlint.outcome == 'failure'
+        if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.ethereal.email
