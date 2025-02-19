@@ -51,7 +51,7 @@ jobs:
       - name: Close PR if Not Conventional
         if: failure()
         run: |
-          gh pr close ${{ github.event.pull_request.number }} --comment "Your PR title does not follow Conventional Commits!"
+          gh pr close ${{ github.event.pull_request.number }} --comment "Your PR does not follow Conventional Commits!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
