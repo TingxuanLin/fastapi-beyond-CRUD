@@ -46,10 +46,10 @@ jobs:
           echo "Database is ready!"
 
       - name: Run Database Migrations
-        run: docker exec $(docker ps -q -f name=web) alembic upgrade head
+        run: docker exec fastapi-beyond-crud-web-1 alembic upgrade head
 
       - name: Run Tests Inside Docker
-        run: docker exec $(docker ps -q -f name=web) pytest
+        run: docker exec fastapi-beyond-crud-web-1 pytest
         continue-on-error: false  
 
       - name: Stop Docker Services
