@@ -4,26 +4,33 @@ This is the source code for the [FastAPI Beyond CRUD](https://youtube.com/playli
 
 For more details, visit the project's [website](https://jod35.github.io/fastapi-beyond-crud-docs/site/).
 
-## Table of Contents
+## Assignment 7
+First, create conventional_commits.yml to check if commits are valid
+    a. check pr title 
+    b. check pr commit
 
-1. [Getting Started](#getting-started)
-2. [Prerequisites](#prerequisites)
-3. [Project Setup](#project-setup)
-4. [Running the Application](#running-the-application)
-5. [Running Tests](#running-tests)
-6. [Contributing](#contributing)
+Second, create nightly_build.yml to check if the projects works
+    a. docker build up
+    b. doing data migration
+    c. run test
+    d. deploy on docker registry
 
-## Getting Started
-Follow the instructions below to set up and run your FastAPI project.
+Third, making project run in local
+    update '.env.example' file:
+        DATABASE_URL=postgresql+asyncpg://postgres:testpass@db:5432/bookly
+        JWT_SECRET=hYW3L6I3gPpEUbtU+17FEHRYJuc8uLYHaLLsuzzyKn4=
+        JWT_ALGORITHM=HS256
+        REDIS_HOST=redis
+        REDIS_PORT=6379
+        REDIS_URL=redis://redis:6379/0
+        MAIL_USERNAME=marcelle.vonrueden72@ethereal.email
+        MAIL_PASSWORD=Z75RUTaWnGs2ytv7bX
+        MAIL_SERVER=smtp.ethereal.email
+        MAIL_PORT=587 
+        MAIL_FROM=nore-reply@bookly.com
+        MAIL_FROM_NAME=Tingxuan
+        DOMAIN=localhost:8000   
 
-### Prerequisites
-Ensure you have the following installed:
-
-- Python >= 3.10
-- PostgreSQL
-- Redis
-
-### Project Setup
 1. Clone the project repository:
     ```bash
     git clone https://github.com/jod35/fastapi-beyond-CRUD.git
@@ -50,31 +57,19 @@ Ensure you have the following installed:
     cp .env.example .env
     ```
 
-6. Run database migrations to initialize the database schema:
-    ```bash
-    alembic upgrade head
+6. Run Data Migration
+   ```bash
+    docker exec fastapi-beyond-crud-web-1 alembic upgrade head
     ```
 
-7. Open a new terminal and ensure your virtual environment is active. Start the Celery worker (Linux/Unix shell):
-    ```bash
-    sh runworker.sh
-    ```
-
-## Running the Application
-Start the application:
-
-```bash
-fastapi dev src/
-```
-Alternatively, you can run the application using Docker:
-```bash
-docker compose up -d
-```
-## Running Tests
-Run the tests using this command
-```bash
-pytest
-```
-
-## Contributing
-I welcome contributions to improve the documentation! You can contribute [here](https://github.com/jod35/fastapi-beyond-crud-docs).
+7. Run test
+   ```bash
+   docker exec fastapi-beyond-crud-web-1 pip install pytest
+   docker exec fastapi-beyond-crud-web-1 pytest
+   ```
+8. End
+   ```bash
+   docker compose down
+   ```
+    
+    
