@@ -21,15 +21,17 @@ jobs:
         with:
           task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
 
-      - name: Fetch PR commits
+      - name: Fetch base branch and PR commits
         run: |
-          git fetch origin +refs/pull/${{ github.event.pull_request.number }}/merge
-          git log origin/main..FETCH_HEAD --oneline
+          # Fetch the base branch (e.g., main) and the PR branch (refs/pull)
+          git fetch origin ${{ github.event.pull_request.base.ref }}  # Fetch base branch (main or other base)
+          git fetch origin pull/${{ github.event.pull_request.number }}/head  # Fetch PR branch
 
       - name: Get the latest commit message
         id: commit_message
         run: |
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          # Get the latest commit message from the PR branch
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B FETCH_HEAD)
           echo "Latest commit message: $COMMIT_MESSAGE"
           echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_ENV
 
