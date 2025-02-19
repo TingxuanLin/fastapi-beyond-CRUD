@@ -16,9 +16,14 @@ jobs:
       - name: Checkout Repository  
         uses: actions/checkout@v4
         
-      - name: Install commitlint
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'  # or whichever version you prefer
+
+      - name: Install dependencies
         run: |
-          npm install -g @commitlint/config-conventional @commitlint/cli
+          npm install  # Installs the required dependencies
           
       - name: PR Conventional Commit Validation
         uses:  ytanikin/pr-conventional-commits@1.4.0
