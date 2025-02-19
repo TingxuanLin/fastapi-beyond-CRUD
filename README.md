@@ -5,6 +5,8 @@ This is the source code for the [FastAPI Beyond CRUD](https://youtube.com/playli
 For more details, visit the project's [website](https://jod35.github.io/fastapi-beyond-crud-docs/site/).
 
 ## Assignment 7
+### For videos, pls check Actions work flow
+
 First, create conventional_commits.yml to check if commits are valid
     a. check pr title 
     b. check pr commit
@@ -71,5 +73,4 @@ Third, making project run in local
    ```bash
    docker compose down
    ```
-    
     
