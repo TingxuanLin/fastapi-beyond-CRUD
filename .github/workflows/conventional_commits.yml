@@ -16,6 +16,10 @@ jobs:
       - name: Checkout Repository  
         uses: actions/checkout@v4
         
+      - name: Install commitlint
+        run: |
+          npm install -g @commitlint/config-conventional @commitlint/cli
+          
       - name: PR Conventional Commit Validation
         uses:  ytanikin/pr-conventional-commits@1.4.0
         with:
