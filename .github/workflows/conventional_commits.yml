@@ -16,8 +16,10 @@ jobs:
       - name: Checkout  
         uses: actions/checkout@v4
 
-      - name: Check Commit Messages
-        uses: webiny/action-conventional-commits@v1.3.0
+      - name: PR Conventional Commit Validation
+        uses:  ytanikin/pr-conventional-commits@1.4.0
+        with:
+          task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
             
       - name: Close PR if Not Conventional
         if: failure() 
