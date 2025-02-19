@@ -22,7 +22,8 @@ jobs:
       - name: Check Conventional Commit Format
         id: 'check-conventional'
         run: |
-          COMMIT_MSGS="${{ steps.get-pr-commits.outputs.commits }}"
+          COMMIT_MSGS="${{ steps.get-pr-commits.outputs.commits.message }}"
+          echo "$COMMIT_MSGS"
           echo "$COMMIT_MSGS" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\([a-zA-Z0-9_-]+\))?: .+' || { echo "Not following Conventional Commits!"; exit 1; }
 
       - name: Close PR if Not Conventional
