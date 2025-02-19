@@ -2,70 +2,93 @@ name: Nightly Build
 
 on:
   schedule:
-    - cron: '0 8 * * *'
-  workflow_dispatch:  
+    - cron: "0 8 * * *"  # Runs every day at 12 AM Pacific time
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
-  build-and-test:
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to DockerHub
-        uses: docker/login-action@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          python-version: "3.12"
 
-      - name: Start Services with Docker Compose
-        run: docker compose up -d  
-
-      - name: Wait for Database to be Ready
+      - name: Install Dependencies
         run: |
-          echo "Waiting for PostgreSQL to be ready..."
-          until docker exec $(docker ps -q -f name=db) psql -U postgres -c "SELECT 1"; do
-            echo "Waiting for database..."
-            sleep 5
-          done
-          echo "Database is ready!"
+          pip install -r requirements.txt  
 
-      - name: Run Database Migrations
-        run: docker exec $(docker ps -q -f name=web) alembic upgrade head
-
-      - name: Run Tests Inside Docker
-        run: docker exec $(docker ps -q -f name=web) pytest
-        continue-on-error: false  
-
-      - name: Stop Docker Services
-        run: docker compose down  
-
-      - name: Build and Push Docker Image
-        if: success()  
+      - name: Run Tests
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
+          DOMAIN: ${{ secrets.DOMAIN }}
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/fastapi-beyond-crud:latest .
-          docker tag ${{ secrets.DOCKER_USERNAME }}/fastapi-beyond-crud:latest ${{ secrets.DOCKER_USERNAME }}/fastapi-beyond-crud:$(date +%Y%m%d)
-          docker push ${{ secrets.DOCKER_USERNAME }}/fastapi-beyond-crud:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/fastapi-beyond-crud:$(date +%Y%m%d)
+          pytest 
 
-  notify-on-failure:
-    needs: build-and-test
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send Failure Notification
-        uses: dawidd6/action-send-mail@v3
+      - name: Send failure email if tests fail
+        if: failure()
+        uses: dawidd6/action-send-mail@v4
         with:
           server_address: smtp.ethereal.email
           server_port: 587
           username: marcelle.vonrueden72@ethereal.email
           password: Z75RUTaWnGs2ytv7bX
-          from: "no-reply@your-repo.com"
-          to: tlin52@dons.usfca.edu
-          subject: "❌ nightly build fail"
-          body: |
-            In the repository ${{ github.repository }} was Fail. 
+          subject: "❌ Nightly Build - Tests Failed!"
+          to: "tlin52@dons.usfca.edu"
+          from: "GitHub Actions <noreply@github.com>"
+          body: "The nightly build tests have failed. The build process will not proceed. Please check the logs."
+
+
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: test  # Only runs if tests pass
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Web Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-beyond-crud-web:nightly -f Dockerfile .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-beyond-crud-web:nightly
+
+      - name: Build and Push Celery Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-beyond-crud-celery:nightly -f Dockerfile .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-beyond-crud-celery:nightly
+
+      - name: Send failure email if image push fails
+        if: failure()
+        uses: dawidd6/action-send-mail@v4
+        with:
+          server_address: smtp.ethereal.email
+          server_port: 587
+          username: marcelle.vonrueden72@ethereal.email
+          password: Z75RUTaWnGs2ytv7bX
+          subject: "❌ Nightly Build - Docker Image Push Failed!"
+          to: "tlin52@dons.usfca.edu"
+          from: "GitHub Actions <noreply@github.com>"
+          body: "The nightly build failed to push one or more Docker images to DockerHub. Please investigate the issue."
