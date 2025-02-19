@@ -16,24 +16,18 @@ jobs:
       - name: Checkout Repository  
         uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v20
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'  # Use a stable version like '16' or '18'
 
       - name: Install Commitlint
         run: |
-          npm install --save-dev @commitlint/{cli,config-conventional}
-
-      - name: Create Commitlint Config
-        run: |
-          echo "module.exports = {extends: ['@commitlint/config-conventional']};" > commitlint.config.js
-
-      - name: Get Commit Messages
-        run: git log --format=%B -n 1 > commit-message.txt
+          npm install -g @commitlint/cli @commitlint/config-conventional
 
       - name: Run Commitlint
         id: commitlint
-        run: npx commitlint --from=HEAD~1 --to=HEAD --config commitlint.config.js
-        continue-on-error: true
+        run: git log --format=%B -n 1 ${{ github.event.pull_request.head.sha }} | commitlint
             
       - name: Close PR if Not Conventional
         if: steps.commitlint.outcome == 'failure'
