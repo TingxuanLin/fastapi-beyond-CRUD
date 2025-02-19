@@ -23,17 +23,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Start Services with Docker Compose
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
-          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
-          MAIL_PORT: ${{ secrets.MAIL_PORT }}
-          MAIL_FROM: ${{ secrets.MAIL_FROM }}
-          DOMAIN: ${{ secrets.DOMAIN }}
-          REDIS_URL: ${{ secrets.REDIS_URL }}
         run: docker compose up -d  
 
       - name: Wait for Database to be Ready
@@ -71,11 +60,12 @@ jobs:
       - name: Send Failure Notification
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.MAIL_SERVER }}
-          server_port: ${{ secrets.MAIL_PORT }}
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "Nightly Build Failed!"
-          body: "The nightly build has failed. Check the logs for details."
-          to: ${{ secrets.MAIL_USERNAME }}
-          from: "GitHub Actions <${{ secrets.MAIL_FROM }}>"
+          server_address: smtp.ethereal.email
+          server_port: 587
+          username: marcelle.vonrueden72@ethereal.email
+          password: Z75RUTaWnGs2ytv7bX
+          from: "no-reply@your-repo.com"
+          to: tlin52@dons.usfca.edu
+          subject: "❌ nightly build fail"
+          body: |
+            In the repository ${{ github.repository }} was Fail. 
