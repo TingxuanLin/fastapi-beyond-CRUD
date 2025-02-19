@@ -41,7 +41,7 @@ jobs:
 
       - name: Lint the latest commit message
         run: |
-          echo "${{ env.commit_message }}" | npx commitlint
+          echo "${{ env.commit_message }}" | npx commitlint --config "@commitlint/config-conventional"
       
       - name: Close PR if Not Conventional
         if: failure()
